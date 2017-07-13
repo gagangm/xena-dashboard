@@ -1,0 +1,35 @@
+{% load staticfiles %}
+<!doctype html>
+<html lang="en">
+<head>
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="manju">
+    <meta name="description" content="XENA">
+    <title>XENA</title>
+    
+    <!-- load js libraries -->
+    <script src="{% static 'js/jquery/jquery.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap/bootstrap.min.js' %}"></script>
+    <script src="/static/js/angular/angular.min.js"></script> 
+
+    <!-- load css libraries -->
+	<link rel="stylesheet" href="{% static 'pagecss/base.css' %}">
+	<link rel="stylesheet" href="{% static 'css/bootstrap/bootstrap.min.css' %}">
+	
+</head>
+<body>
+	<nav class="navbar navbar-fixed-top" style = "background-color:#f1f1f1;">
+		<div class="navbar-header">
+                	<img src="{% static 'img/ss-logo.png' %}" alt="logo" class="logo-default">
+       	</div>
+	</nav>
+	
+        {% block content %} {% endblock %}
+</body>
+</html>
+
+
+      
+
+

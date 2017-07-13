@@ -1,0 +1,62 @@
+{% load staticfiles %}
+<!doctype html>
+<html lang="en">
+<head>
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="manju">
+    <meta name="description" content="XENA">
+    <title>XENA</title>
+    
+    <!-- load js libraries -->
+    <script src="{% static 'js/jquery/jquery.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap/bootstrap.min.js' %}"></script>
+    <script src="/static/js/angular/angular.min.js"></script> 
+
+    <!-- load css libraries -->
+    <link rel="stylesheet" href="{% static 'pagecss/base.css' %}">
+    <link rel="stylesheet" href="{% static 'css/bootstrap/bootstrap.min.css' %}">
+    
+</head>
+<body>
+{% if user.is_authenticated %}
+<div class="navbar navbar-default navbar-static-top navbar-main" role="navigation">
+        <div class="navbar-header">
+            <img src="{% static 'img/ss-logo.png' %}" alt="logo" class="logo-default">
+        </div>
+        <ul class="nav navbar-nav navbar-right">
+            <li class="dropdown">
+                <!-- <a href='http://www.shieldsquare.co/blog/customer-faq/' target='_blank' ><i style="font-size:14px; color:#696969;" class="fa fa-info-circle"></i> FAQ</a> -->
+                <a href="#" class="dropdown-toggle avatar pull-right" style="padding-top:15px;" data-toggle="dropdown">
+                    <span class="hidden-small">{{ user.username }}<b class="caret"></b></span>
+                </a>
+                <ul class="dropdown-menu pull-right">
+                    <li>
+                        <a href="/user_logout/">
+                        <i class="fa fa-sign-out"></i>Logout
+                        </a>
+                    </li>
+                </ul>
+            </li>
+        <ul>
+</div>
+<aside class = "sidebar" style="width:190px;">
+<ul class="nav nav-stacked">
+    <li><a href="/default_rule/"><i class="fa fa-bars" style="color:#337ab7;" aria-hidden="true"></i>Rules</a></li>
+    <li><a href="/rule_constants/"><i class="fa fa-hashtag" aria-hidden="true"></i>Constants</a></li>
+    <li><a href = "/rule_percentages/"><i class="fa fa-percent" aria-hidden="true"></i>Percentages</a></li>
+    <li><a href="/list_features/"><i class="fa fa-cog" style="color:#337ab7;" aria-hidden="true"></i>Features</a></li>
+    <li><a href="/audit_log/"><i class="fa fa-history" style="color:#337ab7;" aria-hidden="true"></i>Audit Logs</a></li>
+    <li><a href="/analytics/"><i class="fa fa-bar-chart" aria-hidden="true" style="color:#337ab7;"></i>Analytics</a></li>
+</ul>
+</aside>
+{% endif %}
+{% block content %} {% endblock %}
+
+</body>
+</html>
+<script>
+var pathname = window.location.pathname;
+console.log(pathname);
+    $('.nav > li > a[href="'+pathname+'"]').parent().addClass('active');
+</script>

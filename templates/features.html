@@ -1,0 +1,171 @@
+{% extends "admin_base.html" %}
+{% load widget_tweaks %}
+{% block content %}
+{% block header %}
+    <script src="/static/js/jquery/jquery.stickytableheaders.min.js"></script>
+    <script src="/static/js/angular/angular-filter.min.js"></script>
+    <script src="/static/pagejs/features.js"></script>
+    <link rel="stylesheet" href="/static/css/bootstrap/font-awesome.min.css">
+    <style>
+        .results tr[visible='false'],
+        .no-result{
+            display:none;
+        }
+        .results tr[visible='true']{
+            display:table-row;
+        }
+        .counter{
+                padding:8px; 
+                color:#ccc;
+        }
+        #feature-exists{
+            display:inline-block;
+            text-align:center;
+            visibility:hidden;
+        }
+        #feature-exists::before{
+            content:'';
+            display:inline-block;
+            height:100%;
+            vertical-align:middle;
+            width:0px;
+        }
+    </style>
+{% endblock %}
+<div ng-app="featureApp" ng-controller="featureCtrl" class="content" ng-cloak>
+    <header><h3>Features Configuration</h3></header><hr>
+    <div class="alert alert-danger alert-dismissable" id="feature-exists" style="display:none;">
+        Feature name already exists
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <form class="form-inline" id = "featureForm" name="featureForm" ng-submit="submit(form)">
+                <div class = "form-group">
+                    <label for = "feature-name">Name</label>
+                    <input type = "text" id="feature-name" class = "form-control input-sm" ng-model="form.feature_name" placeholder="Enter Feature Name" required>
+                </div>
+                <div class = "form-group">
+                    <label for = "type-feature">Type</label>
+                    <select id = "type-feature" class="form-control input-sm"  ng-options="val for val in feature_types" ng-model="form.feature_type" required>
+                        <option value="">Select</option>
+                    </select>
+                </div>
+                <div ng-if ="feature_with_fields | contains: form.feature_type" class = "form-group">
+                    <label for = "type-onfield">On Field</label>
+                    <select id = "type-onfield" class="form-control input-sm"  ng-options="val for val in feature_type_onfield" ng-model="form.feature_onfield" required>
+                        <option value="">Select</option>
+                    </select>
+                </div>
+                <div ng-if = "feature_with_query_str | contains: form.feature_type" class = "form-group">
+                    <label for = "feature-query-str">Query String</label>
+                    <input type = "text" id="feature-query-str" class = "form-control input-sm" ng-model="form.query_str" pattern= "\{.*\}" title="{query str here}" placeholder="query string" required>
+                </div>
+                <div ng-if = "feature_with_plain_str | contains: form.feature_type" class = "form-group">
+                    <label for = "feature-query-str">Query String</label>
+                    <!--<input ng-if = "feature_type == 'collection'" type = "text" id="feature-query-str" class = "form-control input-sm" ng-model="query_str" pattern= "^S:.*|L:.*" title="start with L: or S:" placeholder="" required>-->
+                    <input type = "text" id="feature-plain-str" class = "form-control input-sm" ng-model="form.query_str"  placeholder="" required>
+                </div>
+                <div ng-if = "form.feature_type == 'request'" class = "form-group">
+                    <label for = "feature-req-key">Key</label>
+                    <select id = "feature-req-key" class="form-control input-sm"  ng-options="val for val in req_keys" ng-model="form.req_key" required>
+                        <option value="">Select</option>
+                    </select>    
+                </div>
+                <div ng-if = "form.req_key == 'ct' && form.feature_type == 'request'" class = "form-group">
+                    <label for = "feature-req-val">Value</label>
+                    <select id = "feature-req-val" class="form-control input-sm"  ng-options="key for (key,val) in req_ct_drpdwn" ng-model="form.req_value" required>
+                        <option value="">Select</option>
+                    </select>    
+                </div>
+                 <div ng-if = "form.req_key == 'cc' && form.feature_type == 'request'" class = "form-group">
+                    <label for = "feature-req-val">Value</label>
+                    <select id = "feature-req-val" class="form-control input-sm"  ng-options="val for val in req_cc_drpdwn" ng-model="form.req_value" required>
+                        <option value="">Select</option>
+                    </select>    
+                </div>
+                <div ng-if = "form.req_key == 'type' && form.feature_type == 'request'" class = "form-group">
+                    <label for = "feature-req-val">Value</label>
+                    <select id = "feature-req-val" class="form-control input-sm"  ng-options="val for val in req_type_drpdwn" ng-model="form.req_value" required>
+                        <option value="">Select</option>
+                    </select>    
+                </div>
+                <div ng-if = "feature_with_no_str | contains: form.feature_type" class = "form-group">
+                    <label for = "feature-query-str">Query String</label>
+                    <!--<input ng-if = "feature_type == 'collection'" type = "text" id="feature-query-str" class = "form-control input-sm" ng-model="query_str" pattern= "^S:.*|L:.*" title="start with L: or S:" placeholder="" required>-->
+                    <input type = "text" id="feature-plain-str" class = "form-control input-sm" ng-model="form.query_str" ng-init="form.query_str=''" ng-disabled="true" placeholder="" required>
+                </div>
+                <button id="save-features"  class="btn btn-success" type="submit" style="margin-left:5px;">Save</button>
+                <button id="reset-features" type="reset" value = "Reset" ng-click="reset()" class="btn btn-danger">Reset</button>
+                <i class="fa fa-spinner fa-spin fa-2x fa-fw" id="loader"></i><span class="sr-only">Loading...</span>
+            </form>
+            </div>
+    </div>
+    <hr>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    Configured Features
+                    <!--<span class="counter pull-right"></span>--><input type="text" class="search pull-right" style="color:black;margin:-1px;" placeholder="Search..">
+                </div>
+            
+                <div class="panel-body" style="max-height:500px;">
+
+                    <table id = "feature-table" class="table table-hover results" cellpadding="0" fixed-table-headers="scrollable-area">
+                    <thead style="background-color:#ddd;">
+                        <tr>
+                            <th>Name</th>
+                            <th>On Field</th>
+                            <th>Type</th>
+                            <th>Query</th>
+                            <!--<th>Action</th>-->
+                        </tr>
+                        <tr class="warning no-result">
+                            <td><i class="fa fa-warning"></i> No results</td>
+                         </tr>
+                    </thead>
+                    <tbody>
+                        {% for feature in features_json %}
+                        <tr>
+                            <td>{{feature.feature_name}}</td>
+                            <td>{{feature.on_field}}</td>
+                            <td>{{feature.feature_type}}</td>
+                            <td>{{feature.query_str}}</td>
+                            <!--<td><a href='#'>Edit</a></td>-->
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    </table>
+                        
+                    <ul class="pagination">
+                    {% if features_json.has_previous %}
+                    {% endif %}
+                    {% for page in features_json.paginator.page_range %}
+                    {% if forloop.first %}
+                        {% if features_json.paginator.count > 10 %}
+                            <li><a class="pagelink" href="?page=1">&laquo;</a></li>
+                        {% endif %}
+                    {% endif %}
+                    {% if features_json %}
+                    {% if page == features_json.number %}
+                    <li class="active"><a class="pagelink" href="?page={{page}}">{{ page }}</a></li>
+                    {% elif page > features_json.number|add:"-3" and page < features_json.number  %}
+                    <li ><a class="pagelink" href="?page={{page}}">{{ page }}</a></li>
+                    {% elif page < features_json.number|add:"3" and page > features_json.number  %}
+                    <li ><a class="pagelink" href="?page={{page}}">{{ page }}</a></li>
+                    {% endif %}
+                    {% endif %}
+                    {% if forloop.last %}
+                    {% if features_json.paginator.count > 10 %}
+                    <li><a class="pagelink" href="?page={{ page }}" >&raquo;</a></li>
+                    {% endif %}
+                    {% endif %}
+                    {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</div>
+{% endblock %}

@@ -1,0 +1,138 @@
+{% extends "admin_base.html" %}
+{% load widget_tweaks %}
+{% block content %}
+{% block header %}
+    <script src="/static/js/jquery/jquery.stickytableheaders.min.js"></script>
+    <script src="/static/js/angular/angular-filter.min.js"></script>
+    <script src="/static/pagejs/constants.js"></script>
+    <link rel="stylesheet" href="/static/css/bootstrap/font-awesome.min.css">
+    <style>
+        .results tr[visible='false'],
+        .no-result{
+            display:none;
+        }
+        .results tr[visible='true']{
+            display:table-row;
+        }
+        .counter{
+                padding:8px; 
+                color:#ccc;
+        }
+        #constant-exists{
+            display:inline-block;
+            text-align:center;
+            visibility:hidden;
+        }
+        #constant-exists::before{
+            content:'';
+            display:inline-block;
+            height:100%;
+            vertical-align:middle;
+            width:0px;
+        }
+    </style>
+{% endblock %}
+<div class="content">
+    <header><h3>Constants Configuration</h3></header><hr>
+    <div class="alert alert-danger alert-dismissable" id="constant-exists" style="display:none;">
+        Constant name already exists
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <form class="form-inline" action="" method="POST">
+                {% if error %}
+                    <div class="alert alert-danger">
+                        <button id= "id_alert_danger" type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                        <span id="id_alert_danger_message">{{ error }}</span>
+                    </div>
+                {% endif %}
+                <div class="form-group">
+                    <label for="id_constant_name">Constant </label>
+                    {% if form.constant_name.errors %}
+                    <div class="form-group has-error">
+                    </div>
+                    {% else %}
+                    <div class="form-group">
+                        {{ form.constant_name|add_class:"form-control"|attr:"placeholder:Name"}}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="id_constant_value">Value</label>
+                    {% if form.constant_value.errors %}
+                    <div class="form-group has-error">
+                    </div>
+                    {% else %}
+                    <div class="form-group">
+                        {{ form.constant_value|add_class:"form-control"|attr:"min:0" }}
+                    </div>
+                    {% endif %}
+                </div>
+                <button id="save-constant"  class="btn btn-success" type="submit" style="margin-left:5px;">Save</button>
+                <!--<i class="fa fa-spinner fa-spin fa-2x fa-fw" id="loader"></i><span class="sr-only">Loading...</span>-->
+            </form>
+        </div>
+    </div>
+    <hr>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    Constants
+                    <!--<span class="counter pull-right"></span>--><input type="text" class="search pull-right" style="color:black;margin:-1px;" placeholder="Search..">
+                </div>
+            
+                <div class="panel-body" style="max-height:500px;">
+
+                    <table id = "constant-table" class="table table-hover results" cellpadding="0" fixed-table-headers="scrollable-area">
+                    <thead style="background-color:#ddd;">
+                        <tr>
+                            <th>Name</th>
+                            <th>Value</th>
+                        </tr>
+                        <tr class="warning no-result">
+                            <td><i class="fa fa-warning"></i> No results</td>
+                         </tr>
+                    </thead>
+                    <tbody>
+                        {% for constant in constants %}
+                        <tr>
+                            <td>{{constant.name}}</td>
+                            <td>{{constant.value}}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    </table>
+                        
+                    <ul class="pagination">
+                    {% if constants.has_previous %}
+                    {% endif %}
+                    {% for page in constants.paginator.page_range %}
+                    {% if forloop.first %}
+                        {% if constants.paginator.count > 10 %}
+                            <li><a class="pagelink" href="?page=1">&laquo;</a></li>
+                        {% endif %}
+                    {% endif %}
+                    {% if constants %}
+                    {% if page == constants.number %}
+                    <li class="active"><a class="pagelink" href="?page={{page}}">{{ page }}</a></li>
+                    {% elif page > constants.number|add:"-3" and page < constants.number  %}
+                    <li ><a class="pagelink" href="?page={{page}}">{{ page }}</a></li>
+                    {% elif page < constants.number|add:"3" and page > constants.number  %}
+                    <li ><a class="pagelink" href="?page={{page}}">{{ page }}</a></li>
+                    {% endif %}
+                    {% endif %}
+                    {% if forloop.last %}
+                    {% if constants.paginator.count > 10 %}
+                    <li><a class="pagelink" href="?page={{ page }}" >&raquo;</a></li>
+                    {% endif %}
+                    {% endif %}
+                    {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</div>
+{% endblock %}

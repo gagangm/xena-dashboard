@@ -1,0 +1,95 @@
+{% extends "admin_base.html" %}
+{% load widget_tweaks %}
+{% block content %}
+{% block header %}
+    <script src="/static/js/jquery/jquery.stickytableheaders.min.js"></script>
+    <link rel="stylesheet" href="/static/css/bootstrap/font-awesome.min.css">
+    <script src="/static/js/angular/json-tree.js"></script>
+    <script src="/static/pagejs/audit-log.js"></script>
+    <link rel="stylesheet" href="/static/css/json-tree.css">
+    <style>
+        .results tr[visible='false'],
+        .no-result{
+            display:none;
+        }
+        .results tr[visible='true']{
+            display:table-row;
+        }
+        .counter{
+                padding:8px; 
+                color:#ccc;
+        }
+      
+    </style>
+{% endblock %}
+<div ng-app="auditApp" ng-controller="auditCtrl" class="content">
+    <header><h3>Audit Log</h3></header><hr>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    Audit Logs
+                    <!--<span class="counter pull-right"></span>--><input type="text" class="search pull-right" style="color:black;margin:-1px;" placeholder="Search..">
+                </div>
+            
+                <div class="panel-body">
+
+                    <table id = "audit-table" class="table table-hover results" cellpadding="0" fixed-table-headers="scrollable-area">
+                    <thead style="background-color:#ddd;">
+                        <tr>
+                            <th>Rule Name</th>
+                            <th>User</th>
+                            <th>Old Values</th>
+                            <th>New Values</th>
+                            <th>Timestamp</th>
+                            <!--<th>Action</th>-->
+                        </tr>
+                        <tr class="warning no-result">
+                            <td><i class="fa fa-warning"></i> No results</td>
+                         </tr>
+                    </thead>
+                    <tbody>
+                        {% for d in data %}
+                        <tr>
+                            <td>{{d.name}}</td>
+                            <td>{{d.user}}</td>
+                            <td><json-tree object="{{d.old_value}}" start-expanded="false" root-name="'old'"></json-tree></td>
+                            <td><json-tree object="{{d.new_value}}" start-expanded="false" root-name="'new'"></json-tree></td>
+                            <td>{{d.timestamp}}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    </table>
+                        
+                    <ul class="pagination" style="margin-top:0px;">
+                    {% if data.has_previous %}
+                    {% endif %}
+                    {% for page in data.paginator.page_range %}
+                    {% if forloop.first %}
+                        {% if data.paginator.count > 5 %}
+                            <li><a class="pagelink" href="?page=1">&laquo;</a></li>
+                        {% endif %}
+                    {% endif %}
+                    {% if data %}
+                    {% if page == data.number %}
+                    <li class="active"><a class="pagelink" href="?page={{page}}">{{ page }}</a></li>
+                    {% elif page > data.number|add:"-3" and page < data.number  %}
+                    <li ><a class="pagelink" href="?page={{page}}">{{ page }}</a></li>
+                    {% elif page < data.number|add:"3" and page > data.number  %}
+                    <li ><a class="pagelink" href="?page={{page}}">{{ page }}</a></li>
+                    {% endif %}
+                    {% endif %}
+                    {% if forloop.last %}
+                    {% if data.paginator.count > 5 %}
+                    <li><a class="pagelink" href="?page={{ page }}" >&raquo;</a></li>
+                    {% endif %}
+                    {% endif %}
+                    {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</div>
+{% endblock %}
