@@ -1,0 +1,171 @@
+{% extends "admin_base.html" %}
+{% block content %}
+{% block header %}
+	<script src="/static/js/angular/ng-table.min.js"></script>
+	<script src="/static/js/jquery/jquery.stickytableheaders.min.js"></script>
+	<script src="/static/js/angular/angularjs-dropdown-multiselect.js"></script>
+    <link rel="stylesheet" href="/static/js/angular/ng-table.min.css">
+    <link rel="stylesheet" href="/static/css/jquery/jquery-ui.min.css">
+	<script src="/static/pagejs/rule-js/ruletable.js"></script>
+	<script src="/static/js/jquery/jquery-ui.min.js"></script>
+	<link rel="stylesheet" href="/static/css/bootstrap/font-awesome.min.css">
+	<link rel="stylesheet" href="/static/pagecss/ruletable.css">
+	<style>
+	   .ui-autocomplete
+        {
+            max-width:500px;
+            white-space: nowrap;
+            overflow-y : scroll;
+            overflow-x : hidden;
+            text-overflow: ellipsis;
+            max-height: 100px;
+        }
+        .no-result{
+            display:none;
+        }
+    </style>
+{% endblock %}
+<div ng-app="ruleApp" ng-controller="ruleCtrl" class = "content" ng-cloak>{% csrf_token %}
+    <div class = "row" style="height:30px;margin-top:10px;">
+          <div class = "col-md-offset-2 col-md-8 col-md-offset-2 text-center" ><b id = "show-table-name" style="color:coral">Showing Rule Table : Global Rule Table </b></div>
+    </div>
+    <hr>
+	<div class = "row">
+	   <div class="col-xs-offset-2 col-xs-10" id="sid-validate" style="color:red;visibility:hidden;">Incorrect sid value or sid string.</div>
+		<div class=" col-md-offset-2 col-md-8 col-md-offset-2 search">
+            <input class="form-control input-sm" maxlength="200" type="text" id="sids" name="sites" placeholder="Search SID/Site"/>
+            <button type="button" class="btn btn-primary btn-sm search-btn" id="search_btn" style="left:500px;">Search</button>
+		</div>
+	</div>
+	
+	<div class = "row" id= "table-id">
+		<div class="col-md-12">
+			<div class="panel panel-primary">
+        		        <div class="panel-heading">
+                            <span></span>Rules Configured
+                            <a href="#" ng-click="showRulePopUp('')" id = "add-new-rule" class="pull-right" style="color:white;a:hover:white;"><i class="fa fa-plus" aria-hidden="true"></i>
+Add Rule</a>
+            			</div>
+				<div class="panel-body">
+					<!--<input type="text" ng-model="search.$" placeholder="Search" />-->
+				<!--	<div class = "row">
+						<div class ="col-md-offset-3 col-md-6 col-md-offset-3">
+						<i class="fa fa-circle" aria-hidden="true" style="color:#84ba24;"></i> Active & Enabled &nbsp
+						<i class="fa fa-circle" aria-hidden="true" style="color:#fea444;"></i> Monitor & Enabled &nbsp
+						<i class="fa fa-circle" aria-hidden="true" style="color:#ee2f2f;"></i> Monitor & Disabled &nbsp
+						</div>
+					</div><br>-->
+					<div><input type="text" id = "searchrule" onkeyup = "searchfunc()" class="form-control" style="color:black;margin:-1px;" placeholder="Search for rule name"></div>
+					<div class="spinner text-center" ng-show="loading"><i class="fa fa-spinner" style="transform:scale(2,2);" aria-hidden="true"><span>Loading</span></i></div>
+					<div class = "text-center" id = "no-rules-text">No Rules!Add a new rule by clicking on add rule</div>
+					<div class  = "rules-view-table" id="scrollable-area">
+					<table ng-table="ruleTable" id="rule-table" class="table table-hover" cellspacing="0" fixed-table-headers="scrollable-area">
+							<tr ng-repeat="obj in rule_json track by $index">
+								{% verbatim %} 
+								<td data-title='"Priority"' class="rule-score" style="width:10%;">{{obj.score}}</td>
+								<td data-title='"Name"' class="rule-name" style="width:10%;"><span ng-show="obj.is_private == 'true'"><i class="fa fa-pinterest" title="Private Rule" style="color:#337ab7;" aria-hidden="true"></i>&nbsp</span>{{obj.rule_name}}</td>
+								<td data-title='"Status"' style="width:10%;"><span ng-if="obj.status == 0"><i class="fa fa-circle" aria-hidden="true" style="color:#ee2f2f;" title = "Rule Disabled"></i></span>
+								<span ng-if="obj.status == 1 && obj.mode == 1"><i class="fa fa-circle" aria-hidden="true" style="color:#84ba24;" title = "Active mode and Rule Enabled"></i></span>
+								<span ng-if="obj.status == 1 && obj.mode == 0"><i class="fa fa-circle" aria-hidden="true" style="color:#fea444;" title = "Monitor mode and Rule Enabled"></i></span></td>
+								<td data-title='"Conditions"' class="condition text-left" style="width:70%;word-wrap:break-word;"><span style="display:inline-block;margin-top:3px;" ng-repeat="condition in obj.conditions track by $index" ><code>{{condition}}</code>&nbsp<span style="color:lightgrey;" ng-if ="$index < obj.conditions.length-1" >&</span>&nbsp</span></td>	
+								<td data-title='"Actions"' style="width:10%;"><a id ="trigger-popup" ng-href="#" ng-click="showRulePopUp(obj)"><i class="fa fa-pencil-square-o" aria-hidden="true"></i></a></td>
+								{% endverbatim %}
+			                 </tr>
+			                 <tr class="warning no-result">
+                            <td><i class="fa fa-warning"></i> No results</td>
+                         </tr>
+							
+    					</table>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	 {% include "rulepopup.html" %}  
+</div>
+{% block script_extra %}
+<script type="text/javascript">
+$('#sids').val('Global Rule Table');
+sids_data = [];
+sids_vals = [];
+$.ajax({
+        type    :   'GET',
+        url     :   '/get_list_of_sids/',
+        success: function(data) {
+            data.forEach(function(item,index,arr){
+                sids_data.push(item['Key']);
+                sids_vals.push(item['Value']);
+            });
+           
+        },
+        error: function(error)
+        {
+            console.log('ERROR');
+        }
+});
+
+$('#sids').autocomplete({
+    source: sids_data,
+    minLength: 0,
+    scroll: true
+});
+
+
+$("#search_btn").click(function(e){
+    var cur_sid = $('#sids').val().trim();
+    found = 0;
+    for(var i = 0;i<sids_data.length;i++){
+      if(cur_sid === sids_data[i] || cur_sid == sids_vals[i]){
+        if(cur_sid == 0){
+            found = 0;
+            break;
+        }
+        found = 1;
+        break;  
+      }
+    }
+    if(found == 0){
+        document.getElementById('table-id').style.visibility = 'hidden';
+        document.getElementById('sid-validate').style.visibility = 'visible';
+        $('#show-table-name').hide();
+    }
+    else{
+        document.getElementById('table-id').style.visibility = 'visible';
+        document.getElementById('sid-validate').style.visibility = 'hidden';
+        if (cur_sid == "Global Rule Table"){
+            angularTable(0);
+            $('#show-table-name').html('Showing Rule Table:'+ cur_sid);
+        }
+        else{
+            var sid = cur_sid.split(' ')[0];
+            angularTable(sid);
+            $('#show-table-name').html('Showing Rule Table For Sid:'+ cur_sid);
+        }
+        
+        $('#show-table-name').show();
+    }
+});
+
+
+function searchfunc() {
+
+    var input, filter, table, tr, td, i;
+    input = document.getElementById("searchrule");
+    filter = input.value.toUpperCase();
+    table = document.getElementById("rule-table");
+    tr = table.getElementsByTagName("tr");
+    for (i = 0; i < tr.length; i++) {
+    td = tr[i].getElementsByTagName("td")[1];
+    if (td) {
+      if (td.innerHTML.toUpperCase().indexOf(filter) > -1) {
+        tr[i].style.display = "";
+      } else {
+        tr[i].style.display = "none";
+      }
+    }       
+  }
+}
+
+</script>
+{% endblock %}
+{% endblock %}
